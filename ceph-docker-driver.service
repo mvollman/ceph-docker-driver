@@ -1,0 +1,14 @@
+[Unit]
+Description=ceph-docker-driver
+Wants=scini.service
+Before=docker.service
+After=scini.service
+
+[Service]
+EnvironmentFile=/etc/default/ceph-docker-driver
+ExecStart=/usr/bin/ceph-docker-driver
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+
+[Install]
+WantedBy=docker.service
