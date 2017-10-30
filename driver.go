@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -201,27 +200,19 @@ func (d CephDriver) Remove(r volume.Request) volume.Response {
 
 func (d CephDriver) List(r volume.Request) volume.Response {
 	fmt.Println("List request recieved")
-	cmd := exec.Command("rbd", "--id", d.Username, "ls", "-p", d.Pool)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		fmt.Println("Failed to create stdout pipe")
-		return volume.Response{Err: err.Error()}
-	}
+	var data []string
 
-	rd := bufio.NewReader(stdout)
-	if err := cmd.Start(); err != nil {
+	out, err := exec.Command("rbd", "--id", d.Username, "--format", "json", "ls", "-p", d.Pool).Output()
+	if err != nil {
 		fmt.Println("Failed to run rbd ls command")
 		return volume.Response{Err: err.Error()}
 	}
 
+	_ = json.Unmarshal(out, &data)
+
 	var vols []*volume.Volume
-	for {
-		str, err := rd.ReadString('\n')
-		if err != nil {
-			fmt.Println("Failed to parse list results")
-			break
-		}
-		vols = append(vols, &volume.Volume{Name: strings.TrimSuffix(str, "\n")})
+	for _, d := range data {
+		vols = append(vols, &volume.Volume{Name: d})
 	}
 
 	return volume.Response{Volumes: vols}
