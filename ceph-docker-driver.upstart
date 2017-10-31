@@ -1,0 +1,25 @@
+### START SCRIPT ###
+# vim:set ft=upstart ts=2 et:
+
+description "ceph-docker-driver"
+author "Mike Vollman <mvollman@cas.org>"
+
+start on (runlevel [2345] and started udev and started rsyslog and local-filesystems)
+stop on (runlevel [016] and udev and rsyslog and local-filesystems)
+
+expect daemon
+respawn
+respawn limit 10 5
+
+# environment variables
+env RUNBIN="/usr/bin/ceph-docker-driver"
+env NAME="ceph-docker-driver"
+env DAEMON_OPTS=''
+
+# Run the daemon
+script
+  set -a
+  [ -f /etc/default/ceph-docker-driver ] && . /etc/default/ceph-docker-driver
+  exec \$RUNBIN \$DAEMON_OPTS &
+end script
+### END SCRIPT ###
